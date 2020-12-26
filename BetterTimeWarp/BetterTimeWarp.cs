@@ -294,8 +294,6 @@ namespace BetterTimeWarp
 
         //physics settings
         public bool ScaleCameraSpeed = true;
-        public bool UseLosslessPhysics = false;
-        public float LosslessUpperThreshold = 2f;
 
         GUISkin skin;
 
@@ -805,69 +803,28 @@ namespace BetterTimeWarp
 
             ScaleCameraSpeed = GUILayout.Toggle(ScaleCameraSpeed, "<b><color=" + labelColor + ">Scale Camera Speed</color></b>");
             GUILayout.Label("<color=white>Removes the time based smoothing of the camera so that it doesn't lag at really low warp</color>");
-            GUILayout.Space(5f);
+            //GUILayout.Space(5f);
 
-            UseLosslessPhysics = GUILayout.Toggle(UseLosslessPhysics, "<b><color=" + labelColor + ">Use Lossless Physics</color></b> <color=red><i>Experimental!</i></color>");
-            GUILayout.Label("<color=white>Increases the physics simulation rate so that you can maintain accurate physics at high warp</color>");
-            GUILayout.Label("<color=#bbb><b>Note:</b> Lossless Physics causes extreme lag above 50-100x time warp, depending on your computer. <i>You have been warned!</i></color>");
-            GUILayout.Space(5f);
-            GUILayout.Label("<b>Lossless Physics Accuracy:</b>");
-            GUILayout.Label("<color=white>1/2 is recommended, but if you have a weaker computer then 1/3 or 1/4 will be easier on your CPU.</color>");
-            GUILayout.BeginHorizontal(skin.box);
-            LosslessUpperThreshold = (float)(GUILayout.Toolbar((int)(LosslessUpperThreshold - 1f), toolbar, smallButtonStyle, GUILayout.ExpandWidth(true)) + 1);
-            GUILayout.EndHorizontal();
-            GUILayout.Space(10f);
+            //UseLosslessPhysics = GUILayout.Toggle(UseLosslessPhysics, "<b><color=" + labelColor + ">Use Lossless Physics</color></b> <color=red><i>Experimental!</i></color>");
+            //GUILayout.Label("<color=white>Increases the physics simulation rate so that you can maintain accurate physics at high warp</color>");
+            //GUILayout.Label("<color=#bbb><b>Note:</b> Lossless Physics causes extreme lag above 50-100x time warp, depending on your computer. <i>You have been warned!</i></color>");
+            //GUILayout.Space(5f);
+            //GUILayout.Label("<b>Lossless Physics Accuracy:</b>");
+            //GUILayout.Label("<color=white>1/2 is recommended, but if you have a weaker computer then 1/3 or 1/4 will be easier on your CPU.</color>");
+            //GUILayout.BeginHorizontal(skin.box);
+            //LosslessUpperThreshold = (float)(GUILayout.Toolbar((int)(LosslessUpperThreshold - 1f), toolbar, smallButtonStyle, GUILayout.ExpandWidth(true)) + 1);
+            //GUILayout.EndHorizontal();
+            //GUILayout.Space(10f);
 
-            GUILayout.Label("<b>Physics Timestep:</b> <color=white>" + Time.fixedDeltaTime + "s</color>");
-            GUILayout.Label("<b>Physics Timescale:</b> <color=white>" + Time.timeScale + "x</color>");
-            GUILayout.Label("<b>Lossless Upper Threshold:</b> <color=white>" + LosslessUpperThreshold.ToString("N3") + "x</color>");
+            //GUILayout.Label("<b>Physics Timestep:</b> <color=white>" + Time.fixedDeltaTime + "s</color>");
+            //GUILayout.Label("<b>Physics Timescale:</b> <color=white>" + Time.timeScale + "x</color>");
+            //GUILayout.Label("<b>Lossless Upper Threshold:</b> <color=white>" + LosslessUpperThreshold.ToString("N3") + "x</color>");
 
             GUILayout.EndScrollView();
             if (!lockWindow())
                 GUI.DragWindow();
         }
 
-        void FixedUpdate()
-        {
-            if (TimeWarp.fetch != null &&  TimeWarp.fetch.Mode == TimeWarp.Modes.HIGH && UseLosslessPhysics && Time.timeScale < 100f)
-            {
-                if (Time.timeScale == 1f)
-                {
-                    Time.fixedDeltaTime = 0.02f;
-
-                    //ScreenMessages.PostScreenMessage("1 Setting Time.fixedDeltaTime to " + Time.fixedDeltaTime.ToString("N4"), 5);
-                    Planetarium.fetch.fixedDeltaTime = Time.fixedDeltaTime;
-                    Time.maximumDeltaTime = GameSettings.PHYSICS_FRAME_DT_LIMIT;
-
-                }
-                else
-                {
-                    if (Time.timeScale >= LosslessUpperThreshold)
-                    {
-                        Time.fixedDeltaTime = LosslessUpperThreshold * 0.02f;
-                        //ScreenMessages.PostScreenMessage("2 Setting Time.fixedDeltaTime to " + Time.fixedDeltaTime.ToString("N4"), 5);
-                        Planetarium.fetch.fixedDeltaTime = Time.fixedDeltaTime;
-                        Time.maximumDeltaTime = Time.fixedDeltaTime;
-                    }
-                    else
-                    {
-                        Time.fixedDeltaTime = Time.timeScale * 0.02f;
-                        //ScreenMessages.PostScreenMessage("3 Setting Time.fixedDeltaTime to " + Time.fixedDeltaTime.ToString("N4"), 5);
-
-                        Planetarium.fetch.fixedDeltaTime = Time.fixedDeltaTime;
-                        Time.maximumDeltaTime = Time.fixedDeltaTime;
-                    }
-                }
-
-                float v = Mathf.Clamp((Mathf.Round(Time.fixedDeltaTime * 100f) / 100f), 0.02f, 0.35f);
-                if (v != GameSettings.PHYSICS_FRAME_DT_LIMIT)
-                {
-                    GameSettings.PHYSICS_FRAME_DT_LIMIT = v;
-                    GameSettings.SaveSettings();
-                }
-            }
-        }
-        
         public void SetWarpRates(TimeWarpRates rates, bool message = true)
         {
             if (TimeWarp.fetch != null)
@@ -957,11 +914,7 @@ namespace BetterTimeWarp
 
             if (node.HasValue("ScaleCameraSpeed"))
                 ScaleCameraSpeed = bool.Parse(node.GetValue("ScaleCameraSpeed"));
-            if (node.HasValue("UseLosslessPhysics"))
-                UseLosslessPhysics = bool.Parse(node.GetValue("UseLosslessPhysics"));
-            if (node.HasValue("LosslessUpperThreshold"))
-                LosslessUpperThreshold = float.Parse(node.GetValue("LosslessUpperThreshold"));
-
+            
             customWarps.Clear();
             customWarps.Add(StandardWarp);
             customWarps.Add(StandardPhysWarp);
@@ -1033,8 +986,6 @@ namespace BetterTimeWarp
             ConfigNode node = SettingsNode.GetNode("BetterTimeWarp");
 
             node.SetValue("ScaleCameraSpeed", ScaleCameraSpeed.ToString(), true);
-            node.SetValue("UseLosslessPhysics", UseLosslessPhysics.ToString(), true);
-            node.SetValue("LosslessUpperThreshold", LosslessUpperThreshold.ToString(), true);
 
             node.RemoveNodes("CustomWarpRate");
             foreach (var rates in customWarps)
